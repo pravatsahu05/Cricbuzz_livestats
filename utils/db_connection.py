@@ -1,6 +1,7 @@
 import sqlite3
 import pandas as pd
 import os
+import streamlit as st
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cricbuzz_analytics.db")
 
@@ -10,6 +11,7 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+@st.cache_resource
 def init_db():
     """Create all required tables and populate seed data if empty."""
     conn = get_db_connection()
@@ -742,6 +744,7 @@ ORDER BY p.full_name, bp.quarter;
     }
 }
 
+@st.cache_data(ttl=60, show_spinner=False)
 def execute_sql_query(sql_query_str):
     """Execute raw SQL query and return pandas DataFrame."""
     conn = get_db_connection()
@@ -754,6 +757,7 @@ def execute_sql_query(sql_query_str):
         conn.close()
 
 # Helper CRUD functions
+@st.cache_data(ttl=60, show_spinner=False)
 def get_all_players_df():
     conn = get_db_connection()
     df = pd.read_sql_query("""
@@ -773,6 +777,7 @@ def insert_player(full_name, team_id, role, batting_style, bowling_style, countr
     """, (full_name, team_id, role, batting_style, bowling_style, country, matches, runs, avg, sr, centuries, fifties, wickets))
     conn.commit()
     conn.close()
+    st.cache_data.clear()
 
 def update_player(player_id, full_name, role, country, matches, runs, avg, sr, wickets):
     conn = get_db_connection()
@@ -784,6 +789,7 @@ def update_player(player_id, full_name, role, country, matches, runs, avg, sr, w
     """, (full_name, role, country, matches, runs, avg, sr, wickets, int(player_id)))
     conn.commit()
     conn.close()
+    st.cache_data.clear()
 
 def delete_player(player_id):
     conn = get_db_connection()
@@ -791,4 +797,6 @@ def delete_player(player_id):
     cursor.execute("DELETE FROM players WHERE player_id = ?;", (int(player_id),))
     conn.commit()
     conn.close()
+    st.cache_data.clear()
+
 

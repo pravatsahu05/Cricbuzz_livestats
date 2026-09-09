@@ -2,6 +2,8 @@ import requests
 import os
 import sqlite3
 import pandas as pd
+import streamlit as st
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -21,6 +23,7 @@ def get_headers():
         "X-RapidAPI-Host": RAPIDAPI_HOST
     }
 
+@st.cache_data(ttl=60, show_spinner=False)
 def fetch_live_matches():
     """Fetch live and recent match scorecards directly from RapidAPI Cricbuzz API with fallback."""
     headers = get_headers()
@@ -102,6 +105,7 @@ def fetch_live_matches():
 
     return get_fallback_matches()
 
+@st.cache_data(ttl=120, show_spinner=False)
 def fetch_format_rankings(format_type="test"):
     """Fetch ICC rankings for batsmen, bowlers, allrounders directly from Cricbuzz API for test, odi, or t20."""
     headers = get_headers()
