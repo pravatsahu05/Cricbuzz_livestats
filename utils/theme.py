@@ -126,15 +126,81 @@ def apply_cricket_theme():
     st.markdown(CRICKET_THEME_CSS, unsafe_allow_html=True)
 
 def render_sidebar_branding():
-    """Render consistent sidebar branding & status across all pages."""
+    """Render consistent sidebar branding, dynamic API Key controls, reboot trigger, quota tracker, and Sync API button across all pages."""
+    from utils.api_fetcher import get_api_key, sync_api_to_database, check_api_quota
+
     with st.sidebar:
         st.image("https://img.icons8.com/color/96/cricket.png", width=65)
         st.markdown("<h2 class='gradient-header'>Cricbuzz LiveStats</h2>", unsafe_allow_html=True)
         st.caption("🏟️ Real-Time Cricket Stadium Insights & SQL Engine")
         st.divider()
 
-        current_key = os.getenv("RAPIDAPI_KEY", "")
-        if current_key:
-            st.success("🔒 RapidAPI Key Active (`.env`)")
+        active_key = get_api_key()
+        if st.session_state.get("RAPIDAPI_KEY"):
+            st.success("🟢 RapidAPI Key Active (UI Session)")
+        elif os.getenv("RAPIDAPI_KEY"):
+            st.success("🟢 RapidAPI Key Active (.env)")
+        elif hasattr(st, "secrets") and "RAPIDAPI_KEY" in st.secrets:
+            st.success("🟢 RapidAPI Key Active (Streamlit Secrets)")
         else:
             st.info("💡 Running on Free Live Simulation Engine")
+
+        with st.expander("🔑 RapidAPI Key & Sync Controls", expanded=False):
+            st.markdown("<small style='color: #94a3b8;'>Enter key below or set <code>RAPIDAPI_KEY</code> in Streamlit Cloud Secrets dashboard.</small>", unsafe_allow_html=True)
+            
+            custom_key = st.text_input(
+                "Update RapidAPI Key",
+                value=st.session_state.get("RAPIDAPI_KEY", ""),
+                type="password",
+                placeholder="••••••••••••••••••••••••••••••••",
+                key="sidebar_custom_key_input",
+                help="Key updates automatically reboot session and refresh data."
+            )
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                if st.button("⚡ Save & Reboot", key="sidebar_save_reboot_btn", help="Save new key, clear cache, and reboot app session"):
+                    if custom_key.strip():
+                        st.session_state["RAPIDAPI_KEY"] = custom_key.strip()
+                        os.environ["RAPIDAPI_KEY"] = custom_key.strip()
+                        st.cache_data.clear()
+                        st.success("API Key updated! Rebooting session...")
+                        st.rerun()
+                    else:
+                        st.warning("Please enter a key.")
+
+            with col_b:
+                if st.button("🔄 Clear Cache", key="sidebar_clear_cache_btn", help="Clear app cache and rerun session"):
+                    st.cache_data.clear()
+                    st.success("Cache cleared!")
+                    st.rerun()
+
+            if st.button("📊 Check Key Quota & Usage", key="sidebar_check_quota_btn", help="Check remaining API searches/quota directly from RapidAPI headers"):
+                quota = check_api_quota()
+                if quota.get("remaining") is not None:
+                    st.info(f"📊 **Remaining Searches**: `{quota['remaining']}` / `{quota.get('limit', 'N/A')}`")
+                    if quota.get("hard_remaining"):
+                        st.caption(f"Monthly Hard Limit Remaining: **{quota['hard_remaining']}**")
+                else:
+                    st.warning(f"Status: **{quota.get('status', 'Unknown')}**")
+
+            st.divider()
+
+            if st.button("🔄 Sync Live Cricbuzz API Data", key="sidebar_sync_api_btn", help="Fetch live matches, series, teams & venues from RapidAPI into SQLite DB"):
+                if not active_key and not custom_key.strip():
+                    st.warning("⚠️ Please enter a RapidAPI Key or configure Streamlit Secrets before syncing.")
+                else:
+                    if custom_key.strip() and custom_key.strip() != active_key:
+                        st.session_state["RAPIDAPI_KEY"] = custom_key.strip()
+                        os.environ["RAPIDAPI_KEY"] = custom_key.strip()
+
+                    with st.spinner("Extracting live Cricbuzz API data into SQLite database..."):
+                        success = sync_api_to_database()
+                        if success:
+                            st.cache_data.clear()
+                            st.success("✅ Successfully synced Cricbuzz API data into SQLite DB!")
+                            st.rerun()
+                        else:
+                            st.error("❌ Failed to sync API data. Verify RapidAPI key & quota.")
+
+

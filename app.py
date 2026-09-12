@@ -26,32 +26,9 @@ apply_cricket_theme()
 # Initialize Database Engine
 init_db()
 
-# Sidebar Setup
+# Sidebar Setup (includes dynamic API Key controls, reboot trigger & Sync API button)
 render_sidebar_branding()
 
-with st.sidebar:
-    if os.getenv("RAPIDAPI_KEY"):
-        if st.button("🔄 Sync Live Cricbuzz API Data"):
-            with st.spinner("Fetching latest live matches & scorecards from Cricbuzz API..."):
-                from utils.api_fetcher import sync_api_to_database
-                success = sync_api_to_database()
-                if success:
-                    st.success("Successfully synced Cricbuzz API data into SQLite DB!")
-                    st.rerun()
-                else:
-                    st.error("Failed to sync API data. Verify RapidAPI quota.")
-
-    with st.expander("⚙️ Key Configuration"):
-        custom_key = st.text_input(
-            "Update RapidAPI Key",
-            value="",
-            type="password",
-            placeholder="••••••••••••••••••••••••••••••••",
-            help="Enter new key to override environment settings"
-        )
-        if custom_key:
-            os.environ["RAPIDAPI_KEY"] = custom_key
-            st.success("New API Key set for current session!")
 
 # Main Content Header
 st.markdown("<h1 class='gradient-header'>🏏 Welcome to Cricbuzz LiveStats</h1>", unsafe_allow_html=True)

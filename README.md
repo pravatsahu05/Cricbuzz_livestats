@@ -14,21 +14,28 @@ A comprehensive, multi-page Streamlit web application integrating real-time matc
 
 ---
 
-## 🔑 How to Generate Free Cricbuzz API Key on RapidAPI
+## ☁️ Streamlit Cloud Deployment & API Key Rotation Guide
 
-Follow these steps to generate your free Cricbuzz API key:
+### 1. Deploying to Streamlit Cloud
+1. Push your project repository to GitHub.
+2. Go to **[Streamlit Community Cloud](https://share.streamlit.io/)** and log in.
+3. Click **New app**, choose your repo, branch (`main`), and set **Main file path** to `app.py`.
+4. Click **Advanced settings... -> Secrets** and add your key:
+   ```toml
+   RAPIDAPI_KEY = "your_rapidapi_key_here"
+   ```
+5. Click **Deploy!**
 
-1. Visit **[RapidAPI.com](https://rapidapi.com)** and sign up for a free account.
-2. Search for **"Cricbuzz"** or **"cricbuzz-cricket"** in the search bar.
-3. Select **Cricbuzz Cricket API** (e.g. `cricbuzz-cricket.p.rapidapi.com`).
-4. Click **Subscribe to Test** on the **BASIC (Free)** Plan ($0/month).
-5. Copy your **`X-RapidAPI-Key`** from the Code Snippets header.
-6. Enter your key directly in the **Sidebar Settings** input field in the Streamlit app or set `RAPIDAPI_KEY=your_key` in a `.env` file.
+### 2. Updating API Key on a Regular Basis & Auto-Reboot
+- **Streamlit Cloud Dashboard**: When you update your `RAPIDAPI_KEY` under Streamlit Cloud app settings -> Secrets, Streamlit automatically reboots your application!
+- **In-App Sidebar Rotation**: Alternatively, paste your new API key into the sidebar under **🔑 RapidAPI Key & Sync Controls** and click **⚡ Save & Reboot**. This saves your key, clears cached calls, and reboots the session.
 
-> [!TIP]
-> Even without an API key, Cricbuzz LiveStats runs 100% out-of-the-box using the built-in free live simulation engine!
+### 3. Extracting Live API Data into Web App
+- Click **"🔄 Sync Live Cricbuzz API Data"** in the sidebar.
+- The web app extracts live match scorecards, series, teams, and venue data from Cricbuzz REST API and saves them directly into your SQLite database (`cricbuzz_analytics.db`).
 
 ---
+
 
 ## 🛠️ Installation & Setup Guide
 

@@ -48,16 +48,17 @@ with col2:
 
     st.markdown("""
     <div style="background: linear-gradient(135deg, rgba(22, 101, 52, 0.2) 0%, rgba(15, 23, 42, 0.4) 100%); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; padding: 24px; margin-bottom: 20px; backdrop-filter: blur(12px);">
-        <h3 style="color: #facc15;">🔑 RapidAPI Setup Guide</h3>
+        <h3 style="color: #facc15;">🔑 RapidAPI & Streamlit Cloud Setup</h3>
         <ol>
-            <li>Visit <b><a href="https://rapidapi.com" target="_blank" style="color: #4ade80;">RapidAPI.com</a></b>.</li>
-            <li>Search for <b>cricbuzz-cricket</b> or <b>cricket live data</b>.</li>
-            <li>Click <b>Subscribe to Test</b> under the <b>BASIC ($0/month) Free Plan</b>.</li>
-            <li>Copy your <b>X-RapidAPI-Key</b>.</li>
-            <li>Paste it in the sidebar API settings input field!</li>
+            <li>Get a free key from <b><a href="https://rapidapi.com" target="_blank" style="color: #4ade80;">RapidAPI (cricbuzz-cricket)</a></b>.</li>
+            <li>On <b>Streamlit Cloud</b>, add <code>RAPIDAPI_KEY = "your_key"</code> in <b>Settings -> Secrets</b>.</li>
+            <li><b>Auto-Reboot</b>: Updating Secrets on Streamlit Cloud automatically reboots your app!</li>
+            <li><b>UI Key Rotation</b>: Or paste a new key in the sidebar under <b>🔑 RapidAPI Key & Sync Controls</b> and click <b>⚡ Save & Reboot</b>.</li>
+            <li><b>Data Extraction</b>: Click <b>🔄 Sync Live Cricbuzz API Data</b> in the sidebar to extract live Cricbuzz data directly into your SQLite database.</li>
         </ol>
     </div>
     """, unsafe_allow_html=True)
+
 
 st.divider()
 st.markdown("### 📁 Project Architecture & Folder Structure")

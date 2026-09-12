@@ -14,14 +14,67 @@ except ImportError:
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cricbuzz_analytics.db")
 RAPIDAPI_HOST = "cricbuzz-cricket.p.rapidapi.com"
 
+def get_api_key():
+    """
+    Retrieve active RapidAPI Key.
+    Checks in priority order:
+    1. st.session_state["RAPIDAPI_KEY"] (UI dynamic update)
+    2. os.getenv("RAPIDAPI_KEY") (Environment variable / .env)
+    3. st.secrets["RAPIDAPI_KEY"] (Streamlit Cloud Secrets deployment)
+    """
+    if st.session_state.get("RAPIDAPI_KEY"):
+        return st.session_state["RAPIDAPI_KEY"]
+
+    env_key = os.getenv("RAPIDAPI_KEY")
+    if env_key:
+        return env_key
+
+    try:
+        if hasattr(st, "secrets") and "RAPIDAPI_KEY" in st.secrets:
+            return st.secrets["RAPIDAPI_KEY"]
+    except Exception:
+        pass
+
+    return None
+
 def get_headers():
-    api_key = os.getenv("RAPIDAPI_KEY")
+    api_key = get_api_key()
     if not api_key:
         return None
     return {
         "X-RapidAPI-Key": api_key,
         "X-RapidAPI-Host": RAPIDAPI_HOST
     }
+
+def check_api_quota():
+    """Check remaining API requests and hard limits directly from RapidAPI HTTP response headers."""
+    headers = get_headers()
+    if not headers:
+        return {"status": "No API Key Set", "remaining": None, "limit": None}
+
+    try:
+        res = requests.get(f"https://{RAPIDAPI_HOST}/matches/v1/live", headers=headers, timeout=5)
+        if res.status_code == 200:
+            rem = res.headers.get("X-RateLimit-Requests-Remaining") or res.headers.get("X-RateLimit-rapid-free-plans-hard-limit-Remaining")
+            lim = res.headers.get("X-RateLimit-Requests-Limit") or res.headers.get("X-RateLimit-rapid-free-plans-hard-limit-Limit")
+            hard_rem = res.headers.get("X-RateLimit-rapid-free-plans-hard-limit-Remaining")
+            return {
+                "status": "Active",
+                "remaining": rem,
+                "limit": lim,
+                "hard_remaining": hard_rem,
+                "http_status": 200
+            }
+        elif res.status_code == 429:
+            return {"status": "Quota Exceeded (429)", "remaining": 0, "limit": None}
+        elif res.status_code in (401, 403):
+            return {"status": "Invalid API Key (401/403)", "remaining": 0, "limit": None}
+        else:
+            return {"status": f"HTTP {res.status_code}", "remaining": None, "limit": None}
+    except Exception as e:
+        return {"status": f"Error: {str(e)}", "remaining": None, "limit": None}
+
+
 
 @st.cache_data(ttl=60, show_spinner=False)
 def fetch_live_matches():
